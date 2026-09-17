@@ -5,6 +5,7 @@ import BirthForm from './BirthForm';
 import AstroMap from './AstroMap';
 import Legend from './Legend';
 import NatalSummary from './NatalSummary';
+import TopPicks from './TopPicks';
 import BestCities from './BestCities';
 import CityCheck from './CityCheck';
 import ParansList from './ParansList';
@@ -174,6 +175,12 @@ export default function App() {
               onToggleParans={() => setShowParans((s) => !s)}
             />
             <NatalSummary chart={chart} />
+            <TopPicks
+              chart={chart}
+              enabledLineTypes={visibleLineTypes}
+              includeLocalSpace={showLocalSpace}
+              unit={unit}
+            />
             <BestCities
               chart={chart}
               enabledLineTypes={visibleLineTypes}
