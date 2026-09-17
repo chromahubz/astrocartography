@@ -6,8 +6,10 @@ import AstroMap from './AstroMap';
 import Legend from './Legend';
 import NatalSummary from './NatalSummary';
 import BestCities from './BestCities';
-import { fetchChart, fetchRelocation, type ChartResponse, type RelocateResponse } from './api';
+import CityCheck from './CityCheck';
+import { fetchChart, fetchRelocation, reverseGeocode, type ChartResponse, type RelocateResponse } from './api';
 import { PLANET_META } from './planets';
+import { scorePoint, type PointScore } from './cityScore';
 
 export default function App() {
   const [chart, setChart] = useState<ChartResponse | null>(null);
@@ -23,6 +25,9 @@ export default function App() {
 
   const [relocation, setRelocation] = useState<RelocateResponse | null>(null);
   const [relocationPoint, setRelocationPoint] = useState<[number, number] | null>(null);
+  const [placeName, setPlaceName] = useState<string | null>(null);
+  const [pointScore, setPointScore] = useState<PointScore | null>(null);
+  const [focusKey, setFocusKey] = useState(0);
 
   async function handleSubmit(input: { date: string; time: string; lat: number; lon: number }) {
     setLoading(true);
@@ -40,16 +45,27 @@ export default function App() {
     }
   }
 
-  async function handleMapClick(lat: number, lon: number) {
-    if (!birthInput) return;
+  async function evaluatePoint(lat: number, lon: number, knownPlaceName?: string) {
+    if (!birthInput || !chart) return;
     setRelocationPoint([lat, lon]);
     setRelocation(null);
-    try {
-      const r = await fetchRelocation({ ...birthInput, targetLat: lat, targetLon: lon });
-      setRelocation(r);
-    } catch {
-      // ignore
-    }
+    setPlaceName(knownPlaceName ?? null);
+    // Local-space scoring is instant (no network round trip), so show it right away.
+    setPointScore(scorePoint(chart, { lat, lon }, visibleLineTypes));
+
+    fetchRelocation({ ...birthInput, targetLat: lat, targetLon: lon })
+      .then(setRelocation)
+      .catch(() => {});
+    if (!knownPlaceName) reverseGeocode(lat, lon).then(setPlaceName);
+  }
+
+  function handleMapClick(lat: number, lon: number) {
+    evaluatePoint(lat, lon);
+  }
+
+  function handleSelectPlace(lat: number, lon: number, displayName: string) {
+    evaluatePoint(lat, lon, displayName);
+    setFocusKey((k) => k + 1);
   }
 
   function togglePlanet(p: string) {
@@ -86,6 +102,13 @@ export default function App() {
             />
             <NatalSummary chart={chart} />
             <BestCities chart={chart} enabledLineTypes={visibleLineTypes} />
+            <CityCheck
+              onSelectPlace={handleSelectPlace}
+              checkedPoint={relocationPoint}
+              placeName={placeName}
+              pointScore={pointScore}
+              relocation={relocation}
+            />
             <p className="hint">Click anywhere on the map to see the relocated ASC/MC for that spot.</p>
           </>
         )}
@@ -100,6 +123,9 @@ export default function App() {
             onMapClick={handleMapClick}
             relocation={relocation}
             relocationPoint={relocationPoint}
+            placeName={placeName}
+            pointScore={pointScore}
+            focusKey={focusKey}
           />
         ) : (
           <div className="placeholder">Enter your birth data to generate your astrocartography map.</div>

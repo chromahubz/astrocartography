@@ -1,8 +1,10 @@
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { ChartResponse, RelocateResponse } from './api';
 import { PLANET_META, LINE_STYLES } from './planets';
+import type { PointScore } from './cityScore';
+import PlaceReading from './PlaceReading';
 
 interface Props {
   chart: ChartResponse;
@@ -12,6 +14,10 @@ interface Props {
   onMapClick: (lat: number, lon: number) => void;
   relocation: RelocateResponse | null;
   relocationPoint: [number, number] | null;
+  placeName: string | null;
+  pointScore: PointScore | null;
+  /** Bumped whenever a new point should be flown to and its popup opened (e.g. a search selection). */
+  focusKey?: number;
 }
 
 function ClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
@@ -20,6 +26,14 @@ function ClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) =
       onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
+  return null;
+}
+
+function FlyToOnFocus({ point, focusKey }: { point: [number, number] | null; focusKey: number | undefined }) {
+  const map = useMap();
+  useEffect(() => {
+    if (point && focusKey) map.flyTo(point, Math.max(map.getZoom(), 5));
+  }, [focusKey, map]);
   return null;
 }
 
@@ -45,7 +59,16 @@ export default function AstroMap({
   onMapClick,
   relocation,
   relocationPoint,
+  placeName,
+  pointScore,
+  focusKey,
 }: Props) {
+  const targetMarkerRef = useRef<L.Marker>(null);
+
+  useEffect(() => {
+    if (relocationPoint) targetMarkerRef.current?.openPopup();
+  }, [relocationPoint]);
+
   const polylines = useMemo(() => {
     const items: { key: string; positions: [number, number][]; color: string; dashArray?: string; weight: number }[] = [];
     for (const [planet, data] of Object.entries(chart.lines)) {
@@ -90,11 +113,16 @@ export default function AstroMap({
       worldCopyJump
       style={{ width: '100%', height: '100%' }}
     >
+      {/* Wikimedia's "osm-intl" tiles render place labels with the international
+          (largely English/Latin) name alongside the local one, rather than only
+          the local script baked into standard OSM raster tiles. Free, no API key. */}
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap contributors'
+        url="https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, style by Wikimedia'
+        maxZoom={18}
       />
       <ClickHandler onMapClick={onMapClick} />
+      <FlyToOnFocus point={relocationPoint} focusKey={focusKey} />
       {polylines.map((p) => (
         <Polyline
           key={p.key}
@@ -106,20 +134,15 @@ export default function AstroMap({
         <Popup>Birthplace</Popup>
       </Marker>
       {relocationPoint && (
-        <Marker position={relocationPoint} icon={targetIcon}>
-          <Popup>
-            {relocation ? (
-              <div>
-                <strong>Relocated chart</strong>
-                <br />
-                Lat {relocationPoint[0].toFixed(2)}, Lon {relocationPoint[1].toFixed(2)}
-                <br />
-                ASC: {relocation.ascendant.toFixed(2)}°<br />
-                MC: {relocation.mc.toFixed(2)}°
-              </div>
-            ) : (
-              'Loading...'
-            )}
+        <Marker position={relocationPoint} icon={targetIcon} ref={targetMarkerRef}>
+          <Popup minWidth={220}>
+            <PlaceReading
+              placeName={placeName}
+              lat={relocationPoint[0]}
+              lon={relocationPoint[1]}
+              pointScore={pointScore}
+              relocation={relocation}
+            />
           </Popup>
         </Marker>
       )}

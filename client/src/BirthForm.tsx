@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { geocode, type GeocodeResult } from './api';
+import { useState } from 'react';
+import { useGeocodeSearch } from './useGeocodeSearch';
 
 interface Props {
   onSubmit: (input: { date: string; time: string; lat: number; lon: number }) => void;
@@ -9,38 +9,7 @@ interface Props {
 export default function BirthForm({ onSubmit, loading }: Props) {
   const [date, setDate] = useState('1990-06-15');
   const [time, setTime] = useState('12:00');
-  const [locationQuery, setLocationQuery] = useState('');
-  const [results, setResults] = useState<GeocodeResult[]>([]);
-  const [selected, setSelected] = useState<GeocodeResult | null>(null);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function handleQueryChange(q: string) {
-    setLocationQuery(q);
-    setSelected(null);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.trim().length < 3) {
-      setResults([]);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const r = await geocode(q);
-        setResults(r);
-      } catch {
-        setResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 400);
-  }
-
-  function handleSelect(r: GeocodeResult) {
-    setSelected(r);
-    setLocationQuery(r.display_name);
-    setResults([]);
-  }
+  const { query, results, selected, searching, handleQueryChange, handleSelect } = useGeocodeSearch();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,7 +32,7 @@ export default function BirthForm({ onSubmit, loading }: Props) {
         Birthplace
         <input
           type="text"
-          value={locationQuery}
+          value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="City, Country"
           autoComplete="off"

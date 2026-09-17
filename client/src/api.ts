@@ -44,6 +44,20 @@ export async function geocode(q: string): Promise<GeocodeResult[]> {
   return res.json();
 }
 
+/** Best-effort place name for a clicked map point; returns null over open ocean/remote areas. */
+export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=${lat}&lon=${lon}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.display_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchChart(input: {
   date: string;
   time: string;

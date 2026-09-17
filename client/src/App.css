@@ -125,6 +125,38 @@ html, body, #root { height: 100%; margin: 0; }
 .city-name { font-weight: 600; color: #f2f2f2; }
 .city-detail { color: #bbb; }
 
+.city-check { padding: 12px 0; border-bottom: 1px solid #333; }
+.city-check h3 { font-size: 13px; text-transform: uppercase; color: #999; margin: 0 0 8px; }
+.city-check .location-field { position: relative; }
+.city-check input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2129;
+  color: #eee;
+  font-size: 14px;
+}
+
+.place-reading { text-align: left; font-size: 12px; margin-top: 10px; }
+.place-name { font-weight: 600; font-size: 13px; color: #f2f2f2; margin-bottom: 2px; }
+.place-detail { color: #bbb; margin-bottom: 4px; }
+.place-verdict { display: inline-block; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-bottom: 6px; }
+.verdict-good { background: rgba(124, 197, 118, 0.15); color: #7cc576; }
+.verdict-bad { background: rgba(240, 107, 90, 0.15); color: #f06b5a; }
+.verdict-neutral { background: rgba(201, 162, 39, 0.15); color: #c9a227; }
+.place-lines { list-style: none; padding: 0; margin: 4px 0 0; }
+.place-lines li { padding: 1px 0; color: #ccc; }
+
+/* Leaflet popups default to a white card; restyle to match the app's dark theme
+   so PlaceReading's colors (tuned for the dark sidebar) stay legible there too. */
+.leaflet-popup-content-wrapper {
+  background: #1f2129;
+  color: #eee;
+}
+.leaflet-popup-tip { background: #1f2129; }
+.leaflet-popup-content .place-name { color: #f2f2f2; }
+
 .map-area { flex: 1; position: relative; }
 .placeholder {
   display: flex;

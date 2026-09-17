@@ -6,6 +6,11 @@ const R_KM = 6371;
 const LINE_TYPES = ['mc', 'ic', 'ac', 'dc'] as const;
 type LineType = (typeof LINE_TYPES)[number];
 
+export interface Point {
+  lat: number;
+  lon: number;
+}
+
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -15,30 +20,30 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return 2 * R_KM * Math.asin(Math.sqrt(a));
 }
 
-// Nearest point on a meridian (constant longitude, MC/IC lines) to a city is at
-// the city's own latitude — using the two stored endpoints directly would wildly
-// overstate the distance for most cities.
-function distanceToMeridian(city: City, meridianLon: number): number {
-  return haversineKm(city.lat, city.lon, city.lat, meridianLon);
+// Nearest point on a meridian (constant longitude, MC/IC lines) to any point is at
+// that point's own latitude — using the two stored endpoints directly would wildly
+// overstate the distance for most locations.
+function distanceToMeridian(point: Point, meridianLon: number): number {
+  return haversineKm(point.lat, point.lon, point.lat, meridianLon);
 }
 
 // AC/DC curves are sampled every 0.5 deg of latitude, so nearest-vertex distance
 // is a reasonable (if not exact) approximation of nearest-point-on-curve.
-function minDistanceToSampledCurve(city: City, segments: [number, number][][]): number {
+function minDistanceToSampledCurve(point: Point, segments: [number, number][][]): number {
   let min = Infinity;
   for (const seg of segments) {
     for (const [lat, lon] of seg) {
-      const d = haversineKm(city.lat, city.lon, lat, lon);
+      const d = haversineKm(point.lat, point.lon, lat, lon);
       if (d < min) min = d;
     }
   }
   return min;
 }
 
-function distanceToLine(city: City, lineData: ChartResponse['lines'][string], lineType: LineType): number {
-  if (lineType === 'mc') return distanceToMeridian(city, lineData.mc.lon);
-  if (lineType === 'ic') return distanceToMeridian(city, lineData.ic.lon);
-  return minDistanceToSampledCurve(city, lineData[lineType].segments);
+function distanceToLine(point: Point, lineData: ChartResponse['lines'][string], lineType: LineType): number {
+  if (lineType === 'mc') return distanceToMeridian(point, lineData.mc.lon);
+  if (lineType === 'ic') return distanceToMeridian(point, lineData.ic.lon);
+  return minDistanceToSampledCurve(point, lineData[lineType].segments);
 }
 
 /**
@@ -71,47 +76,61 @@ export interface LineContribution {
   contribution: number;
 }
 
-export interface CityScore {
-  city: City;
+export interface PointScore {
   score: number;
   topContribution: LineContribution | null;
   contributions: LineContribution[];
 }
 
+export interface CityScore extends PointScore {
+  city: City;
+}
+
 const FALLOFF_KM = 300; // e-fold distance for "being near a line" influence
 
+function valenceByPlanet(chart: ChartResponse): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const planet of Object.keys(chart.lines)) {
+    result[planet] = chartValence(chart, planet);
+  }
+  return result;
+}
+
 /**
- * "Best/worst places" heuristic score: for every (planet, line type) pair
- * enabled in `enabledLineTypes`, weight the chart-adjusted planet valence by
- * the line type's traditional strength (AC/MC felt strongest) and by
- * closeness to that specific line, then sum. Sort descending for "best",
- * ascending for "worst".
+ * "Best/worst places" heuristic score for a single point: for every
+ * (planet, line type) pair enabled in `enabledLineTypes`, weight the
+ * chart-adjusted planet valence by the line type's traditional strength
+ * (AC/MC felt strongest) and by closeness to that specific line, then sum.
  */
+export function scorePoint(
+  chart: ChartResponse,
+  point: Point,
+  enabledLineTypes: Set<string> = new Set(LINE_TYPES)
+): PointScore {
+  const valence = valenceByPlanet(chart);
+  const contributions: LineContribution[] = [];
+  let score = 0;
+
+  for (const [planet, lineData] of Object.entries(chart.lines)) {
+    for (const lineType of LINE_TYPES) {
+      if (!enabledLineTypes.has(lineType)) continue;
+      const distanceKm = distanceToLine(point, lineData, lineType);
+      const contribution = valence[planet] * LINE_TYPE_WEIGHT[lineType] * Math.exp(-distanceKm / FALLOFF_KM);
+      contributions.push({ planet, lineType, distanceKm, contribution });
+      score += contribution;
+    }
+  }
+
+  contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+  return { score, topContribution: contributions[0] ?? null, contributions };
+}
+
+/** Same scoring applied across the curated city list, sorted best-first. */
 export function scoreCities(
   chart: ChartResponse,
   enabledLineTypes: Set<string> = new Set(LINE_TYPES)
 ): CityScore[] {
-  const valenceByPlanet: Record<string, number> = {};
-  for (const planet of Object.keys(chart.lines)) {
-    valenceByPlanet[planet] = chartValence(chart, planet);
-  }
-
-  return CITIES.map((city) => {
-    const contributions: LineContribution[] = [];
-    let score = 0;
-
-    for (const [planet, lineData] of Object.entries(chart.lines)) {
-      for (const lineType of LINE_TYPES) {
-        if (!enabledLineTypes.has(lineType)) continue;
-        const distanceKm = distanceToLine(city, lineData, lineType);
-        const contribution =
-          valenceByPlanet[planet] * LINE_TYPE_WEIGHT[lineType] * Math.exp(-distanceKm / FALLOFF_KM);
-        contributions.push({ planet, lineType, distanceKm, contribution });
-        score += contribution;
-      }
-    }
-
-    contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
-    return { city, score, topContribution: contributions[0] ?? null, contributions };
-  }).sort((a, b) => b.score - a.score);
+  return CITIES.map((city) => ({ city, ...scorePoint(chart, city, enabledLineTypes) })).sort(
+    (a, b) => b.score - a.score
+  );
 }
