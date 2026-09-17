@@ -145,8 +145,16 @@ export function scorePoint(
     }
   }
 
-  contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
-  const score = contributions.slice(0, SCORED_LINE_COUNT).reduce((sum, c) => sum + c.contribution, 0);
+  // Score sums the top N most astrologically significant contributions (weighted
+  // by valence, not just distance) - sorted separately so it's unaffected by how
+  // `contributions` gets ordered below for display.
+  const byContribution = [...contributions].sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+  const score = byContribution.slice(0, SCORED_LINE_COUNT).reduce((sum, c) => sum + c.contribution, 0);
+
+  // Display order is genuine proximity: "closest lines" should mean closest in
+  // km, matching how orb-based astrocartography readings actually work, not
+  // which lines happen to carry the most weighted influence.
+  contributions.sort((a, b) => a.distanceKm - b.distanceKm);
   return { score, topContribution: contributions[0] ?? null, contributions };
 }
 
