@@ -1,9 +1,9 @@
 import type { RelocateResponse } from './api';
 import type { PointScore } from './cityScore';
-import { PLANET_META, degToSign } from './planets';
+import { PLANET_META, LINE_TYPE_LABEL, degToSign } from './planets';
 import { lineMeaning, strengthBand } from './lineMeanings';
-
-const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
+import { narrativeSummary } from './narrative';
+import { formatDistance, type DistanceUnit } from './units';
 
 function verdict(score: number): { label: string; className: string } {
   if (score > 0.5) return { label: 'Supportive', className: 'verdict-good' };
@@ -17,12 +17,14 @@ export default function PlaceReading({
   lon,
   pointScore,
   relocation,
+  unit,
 }: {
   placeName: string | null | undefined;
   lat: number;
   lon: number;
   pointScore: PointScore | null;
   relocation: RelocateResponse | null;
+  unit: DistanceUnit;
 }) {
   const v = pointScore ? verdict(pointScore.score) : null;
   const top3 = pointScore?.contributions.slice(0, 3) ?? [];
@@ -43,6 +45,11 @@ export default function PlaceReading({
           {pointScore!.score.toFixed(2)})
         </div>
       )}
+      {pointScore && (
+        <p className="place-narrative">
+          {narrativeSummary(placeName || `This spot`, pointScore.contributions, pointScore.score)}
+        </p>
+      )}
       {top3.length > 0 && (
         <ul className="place-lines">
           {top3.map((c, i) => {
@@ -54,7 +61,7 @@ export default function PlaceReading({
                     {PLANET_META[c.planet]?.symbol} {PLANET_META[c.planet]?.label} {LINE_TYPE_LABEL[c.lineType]}
                   </span>{' '}
                   <span className={`strength-badge ${band.className}`}>{band.label}</span>{' '}
-                  ({Math.round(c.distanceKm)} km)
+                  ({formatDistance(c.distanceKm, unit)})
                 </div>
                 <div className="place-line-meaning">{lineMeaning(c.planet, c.lineType)}</div>
               </li>

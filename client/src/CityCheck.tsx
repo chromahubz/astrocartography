@@ -2,6 +2,7 @@ import { useGeocodeSearch } from './useGeocodeSearch';
 import type { RelocateResponse } from './api';
 import type { PointScore } from './cityScore';
 import PlaceReading from './PlaceReading';
+import type { DistanceUnit } from './units';
 
 interface Props {
   onSelectPlace: (lat: number, lon: number, displayName: string) => void;
@@ -9,9 +10,10 @@ interface Props {
   placeName: string | null;
   pointScore: PointScore | null;
   relocation: RelocateResponse | null;
+  unit: DistanceUnit;
 }
 
-export default function CityCheck({ onSelectPlace, checkedPoint, placeName, pointScore, relocation }: Props) {
+export default function CityCheck({ onSelectPlace, checkedPoint, placeName, pointScore, relocation, unit }: Props) {
   const { query, results, searching, handleQueryChange, handleSelect } = useGeocodeSearch();
 
   function pick(r: (typeof results)[number]) {
@@ -48,6 +50,7 @@ export default function CityCheck({ onSelectPlace, checkedPoint, placeName, poin
           lon={checkedPoint[1]}
           pointScore={pointScore}
           relocation={relocation}
+          unit={unit}
         />
       )}
     </div>

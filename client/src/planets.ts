@@ -39,11 +39,14 @@ export const LINE_STYLES: Record<string, { dashArray?: string; weight: number }>
 // Angular lines (AC/MC) are traditionally felt as the strongest, most personally
 // direct expressions of a planet; DC/IC are real but somewhat less dominant.
 // Used only by the "best places" heuristic.
+export const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC', ls: 'LS' };
+
 export const LINE_TYPE_WEIGHT: Record<string, number> = {
   ac: 1,
   mc: 0.9,
   dc: 0.75,
   ic: 0.75,
+  ls: 0.6, // local space rays are directional/travel-oriented, weighted more lightly
 };
 
 export const ZODIAC_SIGNS = [

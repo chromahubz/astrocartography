@@ -2,10 +2,10 @@ import { useRef, useState } from 'react';
 import { geocode, type GeocodeResult } from './api';
 
 /** Shared debounced-search-with-suggestions behavior for any place-search input. */
-export function useGeocodeSearch() {
-  const [query, setQuery] = useState('');
+export function useGeocodeSearch(initial?: GeocodeResult) {
+  const [query, setQuery] = useState(initial?.display_name ?? '');
   const [results, setResults] = useState<GeocodeResult[]>([]);
-  const [selected, setSelected] = useState<GeocodeResult | null>(null);
+  const [selected, setSelected] = useState<GeocodeResult | null>(initial ?? null);
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

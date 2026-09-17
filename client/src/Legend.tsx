@@ -9,6 +9,8 @@ interface Props {
   onToggleLocalSpace: () => void;
   showCrossings: boolean;
   onToggleCrossings: () => void;
+  showParans: boolean;
+  onToggleParans: () => void;
 }
 
 const LINE_TYPE_LABELS: Record<string, string> = {
@@ -27,6 +29,8 @@ export default function Legend({
   onToggleLocalSpace,
   showCrossings,
   onToggleCrossings,
+  showParans,
+  onToggleParans,
 }: Props) {
   return (
     <div className="legend">
@@ -48,6 +52,10 @@ export default function Legend({
       <label className="legend-row">
         <input type="checkbox" checked={showCrossings} onChange={onToggleCrossings} />
         Planetary crossings (combined-influence points)
+      </label>
+      <label className="legend-row">
+        <input type="checkbox" checked={showParans} onChange={onToggleParans} />
+        Paran lines (latitude bands)
       </label>
 
       <h3>Planets</h3>

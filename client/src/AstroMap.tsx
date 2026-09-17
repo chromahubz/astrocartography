@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { ChartResponse, RelocateResponse } from './api';
-import { PLANET_META, LINE_STYLES } from './planets';
+import { PLANET_META, LINE_STYLES, LINE_TYPE_LABEL } from './planets';
 import type { PointScore } from './cityScore';
 import PlaceReading from './PlaceReading';
 import { findCrossings } from './lineCrossings';
+import { findParans } from './parans';
 import { lineMeaning } from './lineMeanings';
-
-const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
+import type { DistanceUnit } from './units';
 
 interface Props {
   chart: ChartResponse;
@@ -16,11 +16,13 @@ interface Props {
   visibleLineTypes: Set<string>;
   showLocalSpace: boolean;
   showCrossings: boolean;
+  showParans: boolean;
   onMapClick: (lat: number, lon: number) => void;
   relocation: RelocateResponse | null;
   relocationPoint: [number, number] | null;
   placeName: string | null;
   pointScore: PointScore | null;
+  unit: DistanceUnit;
   /** Bumped whenever a new point should be flown to and its popup opened (e.g. a search selection). */
   focusKey?: number;
 }
@@ -65,11 +67,13 @@ export default function AstroMap({
   visibleLineTypes,
   showLocalSpace,
   showCrossings,
+  showParans,
   onMapClick,
   relocation,
   relocationPoint,
   placeName,
   pointScore,
+  unit,
   focusKey,
 }: Props) {
   const targetMarkerRef = useRef<L.Marker>(null);
@@ -120,6 +124,11 @@ export default function AstroMap({
     return findCrossings(chart, visibleLineTypes, visiblePlanets);
   }, [chart, visibleLineTypes, visiblePlanets, showCrossings]);
 
+  const parans = useMemo(() => {
+    if (!showParans) return [];
+    return findParans(chart, visibleLineTypes, visiblePlanets);
+  }, [chart, visibleLineTypes, visiblePlanets, showParans]);
+
   return (
     <MapContainer
       center={[chart.input.lat, chart.input.lon]}
@@ -166,6 +175,26 @@ export default function AstroMap({
           </Popup>
         </CircleMarker>
       ))}
+      {parans.map((p, i) => (
+        <Polyline
+          key={`paran-${i}`}
+          positions={[[p.lat, -179], [p.lat, 179]]}
+          pathOptions={{ color: '#f2f2f2', weight: 1, dashArray: '2 6', opacity: 0.6 }}
+        >
+          <Popup>
+            <div className="crossing-popup">
+              <strong>Paran at {p.lat >= 0 ? `${p.lat.toFixed(1)}°N` : `${(-p.lat).toFixed(1)}°S`}</strong>
+              {[p.a, p.b].map((side, idx) => (
+                <div key={idx} className="crossing-line">
+                  <span style={{ color: PLANET_META[side.planet]?.color }}>
+                    {PLANET_META[side.planet]?.symbol} {PLANET_META[side.planet]?.label} {LINE_TYPE_LABEL[side.lineType]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Popup>
+        </Polyline>
+      ))}
       <Marker position={[chart.input.lat, chart.input.lon]} icon={birthIcon}>
         <Popup>Birthplace</Popup>
       </Marker>
@@ -178,6 +207,7 @@ export default function AstroMap({
               lon={relocationPoint[1]}
               pointScore={pointScore}
               relocation={relocation}
+              unit={unit}
             />
           </Popup>
         </Marker>

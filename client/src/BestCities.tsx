@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { ChartResponse } from './api';
 import { scoreCities, type CityScore } from './cityScore';
-import { PLANET_META } from './planets';
+import { PLANET_META, LINE_TYPE_LABEL } from './planets';
+import { narrativeSummary } from './narrative';
+import { formatDistance, type DistanceUnit } from './units';
 
-const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
-
-function CityRow({ entry }: { entry: CityScore }) {
+function CityRow({ entry, unit }: { entry: CityScore; unit: DistanceUnit }) {
   const top = entry.topContribution;
   return (
     <li>
@@ -18,26 +18,37 @@ function CityRow({ entry }: { entry: CityScore }) {
           <span style={{ color: PLANET_META[top.planet]?.color }}>
             {PLANET_META[top.planet]?.symbol} {PLANET_META[top.planet]?.label} {LINE_TYPE_LABEL[top.lineType]}
           </span>{' '}
-          line ({Math.round(top.distanceKm)} km)
+          line ({formatDistance(top.distanceKm, unit)})
         </div>
       )}
+      <p className="city-narrative">
+        {narrativeSummary(`${entry.city.name}`, entry.contributions, entry.score)}
+      </p>
     </li>
   );
 }
 
 const PAGE_SIZE = 10;
+const MID_SIZE = 100;
 
 export default function BestCities({
   chart,
   enabledLineTypes,
+  includeLocalSpace,
+  unit,
 }: {
   chart: ChartResponse;
   enabledLineTypes: Set<string>;
+  includeLocalSpace: boolean;
+  unit: DistanceUnit;
 }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'best' | 'worst'>('best');
   const [shownCount, setShownCount] = useState(PAGE_SIZE);
-  const ranked = useMemo(() => scoreCities(chart, enabledLineTypes), [chart, enabledLineTypes]);
+  const ranked = useMemo(
+    () => scoreCities(chart, enabledLineTypes, includeLocalSpace),
+    [chart, enabledLineTypes, includeLocalSpace]
+  );
   const total = ranked.length;
   const worstFirst = useMemo(() => [...ranked].reverse(), [ranked]);
   const list = tab === 'best' ? ranked : worstFirst;
@@ -46,6 +57,10 @@ export default function BestCities({
   function switchTab(t: 'best' | 'worst') {
     setTab(t);
     setShownCount(PAGE_SIZE);
+  }
+
+  function showMore() {
+    setShownCount((c) => (c < MID_SIZE ? Math.min(MID_SIZE, list.length) : list.length));
   }
 
   return (
@@ -71,12 +86,13 @@ export default function BestCities({
           </div>
           <ol className="city-list scrollable" key={tab}>
             {shown.map((entry) => (
-              <CityRow key={entry.city.name} entry={entry} />
+              <CityRow key={entry.city.name} entry={entry} unit={unit} />
             ))}
           </ol>
           {shownCount < list.length && (
-            <button type="button" className="show-more" onClick={() => setShownCount((c) => c + 20)}>
-              Show 20 more ({list.length - shownCount} left)
+            <button type="button" className="show-more" onClick={showMore}>
+              Show {shownCount < MID_SIZE ? `up to ${Math.min(MID_SIZE, list.length)}` : `all ${list.length}`} (
+              {list.length - shownCount} left)
             </button>
           )}
         </>

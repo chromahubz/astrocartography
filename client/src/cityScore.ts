@@ -5,6 +5,7 @@ import { PLANET_WEIGHT, LINE_TYPE_WEIGHT, SIGN_RULERS, signIndexOf, dignityModif
 const R_KM = 6371;
 const LINE_TYPES = ['mc', 'ic', 'ac', 'dc'] as const;
 type LineType = (typeof LINE_TYPES)[number];
+type ScoreLineType = LineType | 'ls';
 
 export interface Point {
   lat: number;
@@ -71,7 +72,7 @@ function chartValence(chart: ChartResponse, planet: string): number {
 
 export interface LineContribution {
   planet: string;
-  lineType: LineType;
+  lineType: ScoreLineType;
   distanceKm: number;
   contribution: number;
 }
@@ -105,7 +106,8 @@ function valenceByPlanet(chart: ChartResponse): Record<string, number> {
 export function scorePoint(
   chart: ChartResponse,
   point: Point,
-  enabledLineTypes: Set<string> = new Set(LINE_TYPES)
+  enabledLineTypes: Set<string> = new Set(LINE_TYPES),
+  includeLocalSpace = false
 ): PointScore {
   const valence = valenceByPlanet(chart);
   const contributions: LineContribution[] = [];
@@ -121,6 +123,15 @@ export function scorePoint(
     }
   }
 
+  if (includeLocalSpace) {
+    for (const [planet, ls] of Object.entries(chart.localSpace)) {
+      const distanceKm = minDistanceToSampledCurve(point, ls.segments);
+      const contribution = (valence[planet] ?? 0) * LINE_TYPE_WEIGHT.ls * Math.exp(-distanceKm / FALLOFF_KM);
+      contributions.push({ planet, lineType: 'ls', distanceKm, contribution });
+      score += contribution;
+    }
+  }
+
   contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
   return { score, topContribution: contributions[0] ?? null, contributions };
 }
@@ -128,9 +139,11 @@ export function scorePoint(
 /** Same scoring applied across the curated city list, sorted best-first. */
 export function scoreCities(
   chart: ChartResponse,
-  enabledLineTypes: Set<string> = new Set(LINE_TYPES)
+  enabledLineTypes: Set<string> = new Set(LINE_TYPES),
+  includeLocalSpace = false
 ): CityScore[] {
-  return CITIES.map((city) => ({ city, ...scorePoint(chart, city, enabledLineTypes) })).sort(
-    (a, b) => b.score - a.score
-  );
+  return CITIES.map((city) => ({
+    city,
+    ...scorePoint(chart, city, enabledLineTypes, includeLocalSpace),
+  })).sort((a, b) => b.score - a.score);
 }

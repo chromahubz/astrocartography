@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { useGeocodeSearch } from './useGeocodeSearch';
 
 interface Props {
-  onSubmit: (input: { date: string; time: string; lat: number; lon: number }) => void;
+  onSubmit: (input: { date: string; time: string; lat: number; lon: number }, label: string) => void;
   loading: boolean;
+  initial?: { date: string; time: string; lat: number; lon: number; label: string };
 }
 
-export default function BirthForm({ onSubmit, loading }: Props) {
-  const [date, setDate] = useState('1990-06-15');
-  const [time, setTime] = useState('12:00');
-  const { query, results, selected, searching, handleQueryChange, handleSelect } = useGeocodeSearch();
+export default function BirthForm({ onSubmit, loading, initial }: Props) {
+  const [date, setDate] = useState(initial?.date ?? '1990-06-15');
+  const [time, setTime] = useState(initial?.time ?? '12:00');
+  const { query, results, selected, searching, handleQueryChange, handleSelect } = useGeocodeSearch(
+    initial ? { display_name: initial.label, lat: String(initial.lat), lon: String(initial.lon) } : undefined
+  );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selected) return;
-    onSubmit({ date, time, lat: parseFloat(selected.lat), lon: parseFloat(selected.lon) });
+    onSubmit({ date, time, lat: parseFloat(selected.lat), lon: parseFloat(selected.lon) }, selected.display_name);
   }
 
   return (
