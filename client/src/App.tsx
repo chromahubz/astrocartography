@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import './App.css';
 import BirthForm from './BirthForm';
 import AstroMap from './AstroMap';
+import PolarView from './PolarView';
 import Legend from './Legend';
 import NatalSummary from './NatalSummary';
 import TopPicks from './TopPicks';
@@ -41,6 +42,7 @@ export default function App() {
   const [showCrossings, setShowCrossings] = useState(false);
   const [showParans, setShowParans] = useState(false);
   const [unit, setUnit] = useState<DistanceUnit>('km');
+  const [mapMode, setMapMode] = useState<'mercator' | 'polar'>('mercator');
 
   const [relocation, setRelocation] = useState<RelocateResponse | null>(null);
   const [relocationPoint, setRelocationPoint] = useState<[number, number] | null>(null);
@@ -162,6 +164,22 @@ export default function App() {
                 </button>
               </div>
             </div>
+            <div className="tab-row map-mode-toggle">
+              <button
+                type="button"
+                className={mapMode === 'mercator' ? 'tab active' : 'tab'}
+                onClick={() => setMapMode('mercator')}
+              >
+                Map
+              </button>
+              <button
+                type="button"
+                className={mapMode === 'polar' ? 'tab active' : 'tab'}
+                onClick={() => setMapMode('polar')}
+              >
+                Polar view (fun)
+              </button>
+            </div>
             <Legend
               visiblePlanets={visiblePlanets}
               onTogglePlanet={togglePlanet}
@@ -202,21 +220,25 @@ export default function App() {
       </aside>
       <main className="map-area">
         {chart ? (
-          <AstroMap
-            chart={chart}
-            visiblePlanets={visiblePlanets}
-            visibleLineTypes={visibleLineTypes}
-            showLocalSpace={showLocalSpace}
-            showCrossings={showCrossings}
-            showParans={showParans}
-            onMapClick={handleMapClick}
-            relocation={relocation}
-            relocationPoint={relocationPoint}
-            placeName={placeName}
-            pointScore={pointScore}
-            unit={unit}
-            focusKey={focusKey}
-          />
+          mapMode === 'mercator' ? (
+            <AstroMap
+              chart={chart}
+              visiblePlanets={visiblePlanets}
+              visibleLineTypes={visibleLineTypes}
+              showLocalSpace={showLocalSpace}
+              showCrossings={showCrossings}
+              showParans={showParans}
+              onMapClick={handleMapClick}
+              relocation={relocation}
+              relocationPoint={relocationPoint}
+              placeName={placeName}
+              pointScore={pointScore}
+              unit={unit}
+              focusKey={focusKey}
+            />
+          ) : (
+            <PolarView chart={chart} visiblePlanets={visiblePlanets} visibleLineTypes={visibleLineTypes} />
+          )
         ) : (
           <div className="placeholder">
             {loading ? 'Calculating…' : 'Enter your birth data to generate your astrocartography map.'}
