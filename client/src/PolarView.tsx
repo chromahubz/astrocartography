@@ -7,6 +7,11 @@ import { PLANET_META, LINE_STYLES } from './planets';
 
 const SIZE = 560;
 const CENTER = SIZE / 2;
+const RADIUS = CENTER - 2;
+const CLIP_ANGLE_DEG = 150; // roughly the Antarctic-circle-style cutoff classic azimuthal maps use
+// scale must be set so the clip boundary lands exactly on the disc's edge - otherwise most of the
+// globe projects outside the visible circle instead of warping visibly within it.
+const SCALE = RADIUS / (CLIP_ANGLE_DEG * (Math.PI / 180));
 
 // d3 projections take [longitude, latitude] and use south-pole-centered clipping
 // oddly, so this helper just keeps the (lon, lat) ordering straight in one place
@@ -49,9 +54,9 @@ export default function PolarView({
   const projection = useMemo(() => {
     const p = geoAzimuthalEquidistant()
       .rotate([0, hemisphere === 'N' ? -90 : 90])
-      .clipAngle(150) // the far pole stretches to infinity in this projection - clip before it gets absurd
+      .clipAngle(CLIP_ANGLE_DEG) // the far pole stretches to infinity in this projection - clip before it gets absurd
       .translate([CENTER, CENTER])
-      .scale(240);
+      .scale(SCALE);
     return p;
   }, [hemisphere]);
 
@@ -70,15 +75,22 @@ export default function PolarView({
       for (const lineType of ['mc', 'ic', 'ac', 'dc'] as const) {
         if (!visibleLineTypes.has(lineType)) continue;
         const style = LINE_STYLES[lineType];
-        data[lineType].segments.forEach((seg, i) => {
-          projectPolyline(projection, seg).forEach((pointsStr, j) => {
-            items.push({
-              key: `${planet}-${lineType}-${i}-${j}`,
-              d: `M${pointsStr.replace(/ /g, 'L')}`,
-              color,
-              dashArray: style.dashArray,
-              weight: style.weight,
-            });
+        // The backend pre-splits AC/DC curves wherever they cross +-180 longitude,
+        // purely so the Mercator map doesn't draw a spurious line across the whole
+        // world there. That split is meaningless in this projection (there's no
+        // seam - only the antipodal point is a singularity) and reusing it as-is
+        // would draw an artificial gap in any curve that happens to cross +-180.
+        // Concatenating the segments back exactly reconstructs the original
+        // continuous curve, since splitting only cuts the point list, never
+        // reorders or drops points.
+        const continuousPoints = data[lineType].segments.flat();
+        projectPolyline(projection, continuousPoints).forEach((pointsStr, j) => {
+          items.push({
+            key: `${planet}-${lineType}-${j}`,
+            d: `M${pointsStr.replace(/ /g, 'L')}`,
+            color,
+            dashArray: style.dashArray,
+            weight: style.weight,
           });
         });
       }
@@ -105,20 +117,27 @@ export default function PolarView({
         claim about the Earth's actual shape.
       </p>
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="polar-svg">
-        <circle cx={CENTER} cy={CENTER} r={CENTER - 2} className="polar-ocean" />
-        <path d={graticule} className="polar-graticule" />
-        <path d={land} className="polar-land" />
-        {lines.map((l) => (
-          <path
-            key={l.key}
-            d={l.d}
-            stroke={l.color}
-            strokeWidth={l.weight}
-            strokeDasharray={l.dashArray}
-            fill="none"
-            opacity={0.9}
-          />
-        ))}
+        <defs>
+          <clipPath id="polar-disc-clip">
+            <circle cx={CENTER} cy={CENTER} r={RADIUS} />
+          </clipPath>
+        </defs>
+        <circle cx={CENTER} cy={CENTER} r={RADIUS} className="polar-ocean" />
+        <g clipPath="url(#polar-disc-clip)">
+          <path d={graticule} className="polar-graticule" />
+          <path d={land} className="polar-land" />
+          {lines.map((l) => (
+            <path
+              key={l.key}
+              d={l.d}
+              stroke={l.color}
+              strokeWidth={l.weight}
+              strokeDasharray={l.dashArray}
+              fill="none"
+              opacity={0.9}
+            />
+          ))}
+        </g>
         {birthPoint && (
           <text x={birthPoint[0]} y={birthPoint[1]} textAnchor="middle" dominantBaseline="middle" className="polar-birth-marker">
             ★
