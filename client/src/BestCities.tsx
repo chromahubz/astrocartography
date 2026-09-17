@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { ChartResponse } from './api';
-import { scoreCities, type CityScore } from './cityScore';
+import { scoreCities, scoreTo100, type CityScore } from './cityScore';
 import { PLANET_META, LINE_TYPE_LABEL } from './planets';
 import { narrativeSummary } from './narrative';
 import { formatDistance, type DistanceUnit } from './units';
+import ExpandableText from './ExpandableText';
 
 function CityRow({ entry, unit }: { entry: CityScore; unit: DistanceUnit }) {
   const top = entry.topContribution;
   return (
     <li>
       <div className="city-name">
-        {entry.city.name}, {entry.city.country}
+        {entry.city.name}, {entry.city.country} <span className="city-score">{scoreTo100(entry.score)}/100</span>
       </div>
       {top && (
         <div className="city-detail">
@@ -21,9 +22,10 @@ function CityRow({ entry, unit }: { entry: CityScore; unit: DistanceUnit }) {
           line ({formatDistance(top.distanceKm, unit)})
         </div>
       )}
-      <p className="city-narrative">
-        {narrativeSummary(`${entry.city.name}`, entry.contributions, entry.score)}
-      </p>
+      <ExpandableText
+        className="city-narrative"
+        text={narrativeSummary(`${entry.city.name}`, entry.contributions, entry.score)}
+      />
     </li>
   );
 }

@@ -1,9 +1,10 @@
 import type { RelocateResponse } from './api';
-import type { PointScore } from './cityScore';
+import { scoreTo100, type PointScore } from './cityScore';
 import { PLANET_META, LINE_TYPE_LABEL, degToSign } from './planets';
 import { lineMeaning, strengthBand } from './lineMeanings';
 import { narrativeSummary } from './narrative';
 import { formatDistance, type DistanceUnit } from './units';
+import ExpandableText from './ExpandableText';
 
 function verdict(score: number): { label: string; className: string } {
   if (score > 0.5) return { label: 'Supportive', className: 'verdict-good' };
@@ -41,14 +42,14 @@ export default function PlaceReading({
       )}
       {v && (
         <div className={`place-verdict ${v.className}`}>
-          {v.label} ({pointScore!.score >= 0 ? '+' : ''}
-          {pointScore!.score.toFixed(2)})
+          {v.label} &mdash; {scoreTo100(pointScore!.score)}/100
         </div>
       )}
       {pointScore && (
-        <p className="place-narrative">
-          {narrativeSummary(placeName || `This spot`, pointScore.contributions, pointScore.score)}
-        </p>
+        <ExpandableText
+          className="place-narrative"
+          text={narrativeSummary(placeName || `This spot`, pointScore.contributions, pointScore.score)}
+        />
       )}
       {top3.length > 0 && (
         <ul className="place-lines">

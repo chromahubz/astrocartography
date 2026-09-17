@@ -87,6 +87,14 @@ export interface CityScore extends PointScore {
   city: City;
 }
 
+// A sigmoid squashes the raw (unbounded, roughly -2..+2 in practice) score into a
+// friendlier 0-100 scale, 50 = neutral. k=1.2 was picked so the existing +-0.5
+// "supportive"/"challenging" verdict thresholds land around 65/35 - a visible but
+// not extreme shift from neutral.
+export function scoreTo100(score: number): number {
+  return Math.round(100 / (1 + Math.exp(-1.2 * score)));
+}
+
 const FALLOFF_KM = 300; // e-fold distance for "being near a line" influence
 // How many of a point's closest lines actually count toward its score. Summing
 // every one of a chart's ~40 planet/line-type combinations (even distant ones,
