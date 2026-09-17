@@ -1,7 +1,7 @@
-import { resolveBirthUTC } from './_lib/time.js';
-import { ascMc } from './_lib/astro.js';
+const { resolveBirthUTC } = require('./_lib/time');
+const { ascMc } = require('./_lib/astro');
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -23,4 +23,4 @@ export default function handler(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+};

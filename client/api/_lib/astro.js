@@ -1,4 +1,4 @@
-import * as Astronomy from 'astronomy-engine';
+const Astronomy = require('astronomy-engine');
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -191,7 +191,7 @@ function ascMc(date, lat, lon) {
   return { ascendant: asc, mc, ramc };
 }
 
-export {
+module.exports = {
   PLANETS,
   normalizeDeg,
   wrapLon,

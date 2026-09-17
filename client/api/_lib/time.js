@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon';
-import tzlookup from 'tz-lookup';
+const { DateTime } = require('luxon');
+const tzlookup = require('tz-lookup');
 
 function resolveBirthUTC({ date, time, lat, lon, tzName }) {
   const zone = tzName || tzlookup(lat, lon);
@@ -10,4 +10,4 @@ function resolveBirthUTC({ date, time, lat, lon, tzName }) {
   return { utc: dt.toUTC(), zone, offsetMinutes: dt.offset };
 }
 
-export { resolveBirthUTC };
+module.exports = { resolveBirthUTC };
