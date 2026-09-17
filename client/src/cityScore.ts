@@ -88,6 +88,14 @@ export interface CityScore extends PointScore {
 }
 
 const FALLOFF_KM = 300; // e-fold distance for "being near a line" influence
+// How many of a point's closest lines actually count toward its score. Summing
+// every one of a chart's ~40 planet/line-type combinations (even distant ones,
+// since the falloff never hits exactly zero) systematically favors "supportive"
+// everywhere: there are more traditionally positive planets (Sun, Moon, Mercury,
+// Venus, Jupiter, Uranus, Neptune) than negative ones (Mars, Saturn, Pluto), so
+// the sheer count advantage drowns out actually being close to a malefic line.
+// A real reading looks at what's nearby, not a diffuse average of everything.
+const SCORED_LINE_COUNT = 5;
 
 function valenceByPlanet(chart: ChartResponse): Record<string, number> {
   const result: Record<string, number> = {};
@@ -111,7 +119,6 @@ export function scorePoint(
 ): PointScore {
   const valence = valenceByPlanet(chart);
   const contributions: LineContribution[] = [];
-  let score = 0;
 
   for (const [planet, lineData] of Object.entries(chart.lines)) {
     for (const lineType of LINE_TYPES) {
@@ -119,7 +126,6 @@ export function scorePoint(
       const distanceKm = distanceToLine(point, lineData, lineType);
       const contribution = valence[planet] * LINE_TYPE_WEIGHT[lineType] * Math.exp(-distanceKm / FALLOFF_KM);
       contributions.push({ planet, lineType, distanceKm, contribution });
-      score += contribution;
     }
   }
 
@@ -128,11 +134,11 @@ export function scorePoint(
       const distanceKm = minDistanceToSampledCurve(point, ls.segments);
       const contribution = (valence[planet] ?? 0) * LINE_TYPE_WEIGHT.ls * Math.exp(-distanceKm / FALLOFF_KM);
       contributions.push({ planet, lineType: 'ls', distanceKm, contribution });
-      score += contribution;
     }
   }
 
   contributions.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+  const score = contributions.slice(0, SCORED_LINE_COUNT).reduce((sum, c) => sum + c.contribution, 0);
   return { score, topContribution: contributions[0] ?? null, contributions };
 }
 
