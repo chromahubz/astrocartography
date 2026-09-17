@@ -96,6 +96,22 @@ html, body, #root { height: 100%; margin: 0; }
 .natal-summary td { padding: 2px 4px; }
 .meta-row { font-size: 12px; color: #ccc; margin-bottom: 2px; }
 
+.best-cities { padding: 12px 0; border-bottom: 1px solid #333; }
+.section-toggle {
+  background: none;
+  border: none;
+  color: #eee;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0;
+  cursor: pointer;
+}
+.city-list { list-style: decimal; padding-left: 20px; margin: 8px 0 0; font-size: 12px; }
+.city-list li { margin-bottom: 6px; }
+.city-name { font-weight: 600; color: #f2f2f2; }
+.city-detail { color: #bbb; }
+
 .map-area { flex: 1; position: relative; }
 .placeholder {
   display: flex;

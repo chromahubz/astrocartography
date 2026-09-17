@@ -5,6 +5,7 @@ import BirthForm from './BirthForm';
 import AstroMap from './AstroMap';
 import Legend from './Legend';
 import NatalSummary from './NatalSummary';
+import BestCities from './BestCities';
 import { fetchChart, fetchRelocation, type ChartResponse, type RelocateResponse } from './api';
 import { PLANET_META } from './planets';
 
@@ -84,6 +85,7 @@ export default function App() {
               onToggleLocalSpace={() => setShowLocalSpace((s) => !s)}
             />
             <NatalSummary chart={chart} />
+            <BestCities chart={chart} />
             <p className="hint">Click anywhere on the map to see the relocated ASC/MC for that spot.</p>
           </>
         )}

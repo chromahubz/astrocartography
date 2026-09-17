@@ -1,5 +1,3 @@
-const API_BASE = 'http://localhost:3001';
-
 export interface GeocodeResult {
   display_name: string;
   lat: string;
@@ -26,9 +24,8 @@ export interface ChartResponse {
   resolvedTimeZone: string;
   utcOffsetMinutes: number;
   utcIso: string;
-  julianDayUT: number;
   ecliptic: Record<string, { longitude: number; latitude: number; speed: number }>;
-  houses: { ascendant: number; mc: number; armc: number; cusps: number[] };
+  houses: { ascendant: number; mc: number };
   lines: Record<string, LineData>;
   localSpace: Record<string, LocalSpaceData>;
 }
@@ -37,7 +34,6 @@ export interface RelocateResponse {
   target: { lat: number; lon: number };
   ascendant: number;
   mc: number;
-  cusps: number[];
 }
 
 export async function geocode(q: string): Promise<GeocodeResult[]> {
@@ -54,7 +50,7 @@ export async function fetchChart(input: {
   lat: number;
   lon: number;
 }): Promise<ChartResponse> {
-  const res = await fetch(`${API_BASE}/api/chart`, {
+  const res = await fetch(`/api/chart`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -74,7 +70,7 @@ export async function fetchRelocation(input: {
   targetLat: number;
   targetLon: number;
 }): Promise<RelocateResponse> {
-  const res = await fetch(`${API_BASE}/api/relocate`, {
+  const res = await fetch(`/api/relocate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),

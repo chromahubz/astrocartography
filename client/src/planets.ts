@@ -1,16 +1,31 @@
+// Colors chosen for >=4.5:1 contrast against the dark sidebar (#14161c) as well as
+// mutual distinguishability on the map.
 export const PLANET_META: Record<string, { symbol: string; color: string; label: string }> = {
-  sun: { symbol: '☉', color: '#e8a33d', label: 'Sun' },
-  moon: { symbol: '☽', color: '#9aa5b1', label: 'Moon' },
-  mercury: { symbol: '☿', color: '#8fbf6b', label: 'Mercury' },
-  venus: { symbol: '♀', color: '#e07bb0', label: 'Venus' },
-  mars: { symbol: '♂', color: '#d1483c', label: 'Mars' },
-  jupiter: { symbol: '♃', color: '#5b8fd6', label: 'Jupiter' },
-  saturn: { symbol: '♄', color: '#7a6a53', label: 'Saturn' },
-  uranus: { symbol: '♅', color: '#4fbfbf', label: 'Uranus' },
-  neptune: { symbol: '♆', color: '#4a6fd6', label: 'Neptune' },
-  pluto: { symbol: '♇', color: '#7a4a8f', label: 'Pluto' },
-  chiron: { symbol: '⚷', color: '#b08a4a', label: 'Chiron' },
-  meanNode: { symbol: '☊', color: '#5a5a5a', label: 'North Node' },
+  sun: { symbol: '☉', color: '#f0a83c', label: 'Sun' },
+  moon: { symbol: '☽', color: '#b9c4d1', label: 'Moon' },
+  mercury: { symbol: '☿', color: '#7cc576', label: 'Mercury' },
+  venus: { symbol: '♀', color: '#ec86c0', label: 'Venus' },
+  mars: { symbol: '♂', color: '#e35a4a', label: 'Mars' },
+  jupiter: { symbol: '♃', color: '#6f9fe8', label: 'Jupiter' },
+  saturn: { symbol: '♄', color: '#c9a227', label: 'Saturn' },
+  uranus: { symbol: '♅', color: '#46d1d1', label: 'Uranus' },
+  neptune: { symbol: '♆', color: '#8f6fe8', label: 'Neptune' },
+  pluto: { symbol: '♇', color: '#c56fe0', label: 'Pluto' },
+};
+
+// Classical benefic/malefic classification used only for the "best places" scoring
+// heuristic below — a simplification, not an astronomical fact.
+export const PLANET_WEIGHT: Record<string, number> = {
+  sun: 0.6,
+  moon: 0.4,
+  mercury: 0.3,
+  venus: 1,
+  mars: -0.8,
+  jupiter: 1,
+  saturn: -0.6,
+  uranus: 0.1,
+  neptune: 0.1,
+  pluto: -0.3,
 };
 
 export const LINE_STYLES: Record<string, { dashArray?: string; weight: number }> = {
