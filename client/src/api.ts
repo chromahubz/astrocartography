@@ -41,7 +41,9 @@ export interface RelocateResponse {
 }
 
 export async function geocode(q: string): Promise<GeocodeResult[]> {
-  const res = await fetch(`${API_BASE}/api/geocode?q=${encodeURIComponent(q)}`);
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`
+  );
   if (!res.ok) throw new Error('Geocoding failed');
   return res.json();
 }
