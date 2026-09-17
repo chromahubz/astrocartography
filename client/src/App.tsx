@@ -177,7 +177,7 @@ export default function App() {
                 className={mapMode === 'polar' ? 'tab active' : 'tab'}
                 onClick={() => setMapMode('polar')}
               >
-                Polar view (fun)
+                Polar view
               </button>
             </div>
             <Legend
@@ -237,7 +237,13 @@ export default function App() {
               focusKey={focusKey}
             />
           ) : (
-            <PolarView chart={chart} visiblePlanets={visiblePlanets} visibleLineTypes={visibleLineTypes} />
+            <PolarView
+              chart={chart}
+              visiblePlanets={visiblePlanets}
+              visibleLineTypes={visibleLineTypes}
+              onMapClick={handleMapClick}
+              relocationPoint={relocationPoint}
+            />
           )
         ) : (
           <div className="placeholder">

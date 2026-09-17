@@ -259,14 +259,35 @@ html, body, #root { height: 100%; margin: 0; }
   align-items: center;
   padding: 16px;
 }
-.polar-controls { display: flex; gap: 8px; margin-bottom: 8px; }
-.polar-controls .tab { width: 160px; }
 .polar-caption { max-width: 500px; text-align: center; margin-bottom: 12px; }
-.polar-svg { width: 100%; max-width: 560px; height: auto; }
+.polar-svg-wrap { position: relative; width: 100%; max-width: 560px; }
+.polar-svg { width: 100%; height: auto; touch-action: none; cursor: grab; }
+.polar-svg:active { cursor: grabbing; }
 .polar-ocean { fill: #16324a; stroke: #333; }
-.polar-land { fill: #2a3a2e; stroke: #4a5a4e; stroke-width: 0.5; }
-.polar-graticule { fill: none; stroke: #444; stroke-width: 0.5; }
-.polar-birth-marker { fill: #f2f2f2; font-size: 20px; }
+.polar-land { fill: #2a3a2e; stroke: #4a5a4e; stroke-width: 0.5; vector-effect: non-scaling-stroke; }
+.polar-graticule { fill: none; stroke: #444; stroke-width: 0.5; vector-effect: non-scaling-stroke; }
+.polar-birth-marker { fill: #f2f2f2; }
+.polar-target-marker { fill: #f2f2f2; }
+
+.polar-zoom-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.polar-zoom-controls button {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2129;
+  color: #eee;
+  font-size: 16px;
+  cursor: pointer;
+}
+.polar-zoom-controls .polar-zoom-reset { width: auto; font-size: 10px; padding: 0 4px; }
 .placeholder {
   display: flex;
   align-items: center;
