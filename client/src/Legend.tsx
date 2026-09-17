@@ -11,6 +11,8 @@ interface Props {
   onToggleCrossings: () => void;
   showParans: boolean;
   onToggleParans: () => void;
+  showBestWorstPins: boolean;
+  onToggleBestWorstPins: () => void;
 }
 
 const LINE_TYPE_LABELS: Record<string, string> = {
@@ -31,6 +33,8 @@ export default function Legend({
   onToggleCrossings,
   showParans,
   onToggleParans,
+  showBestWorstPins,
+  onToggleBestWorstPins,
 }: Props) {
   return (
     <div className="legend">
@@ -56,6 +60,10 @@ export default function Legend({
       <label className="legend-row">
         <input type="checkbox" checked={showParans} onChange={onToggleParans} />
         Paran lines (latitude bands)
+      </label>
+      <label className="legend-row">
+        <input type="checkbox" checked={showBestWorstPins} onChange={onToggleBestWorstPins} />
+        Best/worst places pins (top 5 each)
       </label>
 
       <h3>Planets</h3>

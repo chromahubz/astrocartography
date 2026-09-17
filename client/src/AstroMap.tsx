@@ -3,12 +3,14 @@ import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, Popup, useMap,
 import L from 'leaflet';
 import type { ChartResponse, RelocateResponse } from './api';
 import { PLANET_META, LINE_STYLES, LINE_TYPE_LABEL } from './planets';
-import type { PointScore } from './cityScore';
+import { scoreCities, scoreTo100, type CityScore, type PointScore } from './cityScore';
 import PlaceReading from './PlaceReading';
 import { findCrossings } from './lineCrossings';
 import { findParans } from './parans';
 import { lineMeaning } from './lineMeanings';
-import type { DistanceUnit } from './units';
+import { narrativeSummary } from './narrative';
+import ExpandableText from './ExpandableText';
+import { formatDistance, type DistanceUnit } from './units';
 
 interface Props {
   chart: ChartResponse;
@@ -17,6 +19,7 @@ interface Props {
   showLocalSpace: boolean;
   showCrossings: boolean;
   showParans: boolean;
+  showBestWorstPins: boolean;
   onMapClick: (lat: number, lon: number) => void;
   relocation: RelocateResponse | null;
   relocationPoint: [number, number] | null;
@@ -25,6 +28,27 @@ interface Props {
   unit: DistanceUnit;
   /** Bumped whenever a new point should be flown to and its popup opened (e.g. a search selection). */
   focusKey?: number;
+}
+
+function PinPopupContent({ entry, unit }: { entry: CityScore; unit: DistanceUnit }) {
+  const top = entry.topContribution;
+  return (
+    <div className="place-reading">
+      <div className="place-name">
+        {entry.city.name}, {entry.city.country} <span className="city-score">{scoreTo100(entry.score)}/100</span>
+      </div>
+      {top && (
+        <div className="place-detail">
+          closest:{' '}
+          <span style={{ color: PLANET_META[top.planet]?.color }}>
+            {PLANET_META[top.planet]?.symbol} {PLANET_META[top.planet]?.label} {LINE_TYPE_LABEL[top.lineType]}
+          </span>{' '}
+          ({formatDistance(top.distanceKm, unit)})
+        </div>
+      )}
+      <ExpandableText className="place-narrative" text={narrativeSummary(entry.city.name, entry.contributions, entry.score)} />
+    </div>
+  );
 }
 
 function ClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
@@ -61,6 +85,20 @@ const targetIcon = L.divIcon({
   iconAnchor: [10, 20],
 });
 
+const bestIcon = L.divIcon({
+  className: 'best-place-marker',
+  html: '<div style="font-size:18px;line-height:1;">🟢</div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+const worstIcon = L.divIcon({
+  className: 'worst-place-marker',
+  html: '<div style="font-size:18px;line-height:1;">🔴</div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
 export default function AstroMap({
   chart,
   visiblePlanets,
@@ -68,6 +106,7 @@ export default function AstroMap({
   showLocalSpace,
   showCrossings,
   showParans,
+  showBestWorstPins,
   onMapClick,
   relocation,
   relocationPoint,
@@ -128,6 +167,12 @@ export default function AstroMap({
     if (!showParans) return [];
     return findParans(chart, visibleLineTypes, visiblePlanets);
   }, [chart, visibleLineTypes, visiblePlanets, showParans]);
+
+  const { bestPins, worstPins } = useMemo(() => {
+    if (!showBestWorstPins) return { bestPins: [], worstPins: [] };
+    const ranked = scoreCities(chart, visibleLineTypes, showLocalSpace);
+    return { bestPins: ranked.slice(0, 5), worstPins: ranked.slice(-5).reverse() };
+  }, [chart, visibleLineTypes, showLocalSpace, showBestWorstPins]);
 
   return (
     <MapContainer
@@ -194,6 +239,20 @@ export default function AstroMap({
             </div>
           </Popup>
         </Polyline>
+      ))}
+      {bestPins.map((entry) => (
+        <Marker key={`best-${entry.city.name}`} position={[entry.city.lat, entry.city.lon]} icon={bestIcon}>
+          <Popup>
+            <PinPopupContent entry={entry} unit={unit} />
+          </Popup>
+        </Marker>
+      ))}
+      {worstPins.map((entry) => (
+        <Marker key={`worst-${entry.city.name}`} position={[entry.city.lat, entry.city.lon]} icon={worstIcon}>
+          <Popup>
+            <PinPopupContent entry={entry} unit={unit} />
+          </Popup>
+        </Marker>
       ))}
       <Marker position={[chart.input.lat, chart.input.lon]} icon={birthIcon}>
         <Popup>Birthplace</Popup>
