@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { ChartResponse, RelocateResponse } from './api';
 import { PLANET_META, LINE_STYLES } from './planets';
 import type { PointScore } from './cityScore';
 import PlaceReading from './PlaceReading';
+import { findCrossings } from './lineCrossings';
+import { lineMeaning } from './lineMeanings';
+
+const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
 
 interface Props {
   chart: ChartResponse;
   visiblePlanets: Set<string>;
   visibleLineTypes: Set<string>;
   showLocalSpace: boolean;
+  showCrossings: boolean;
   onMapClick: (lat: number, lon: number) => void;
   relocation: RelocateResponse | null;
   relocationPoint: [number, number] | null;
@@ -23,7 +28,10 @@ interface Props {
 function ClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
   useMapEvents({
     click(e) {
-      onMapClick(e.latlng.lat, e.latlng.lng);
+      // worldCopyJump lets you click a wrapped copy of the map, where raw lng can
+      // fall outside -180..180 - normalize before it reaches any distance math.
+      const wrapped = e.latlng.wrap();
+      onMapClick(wrapped.lat, wrapped.lng);
     },
   });
   return null;
@@ -56,6 +64,7 @@ export default function AstroMap({
   visiblePlanets,
   visibleLineTypes,
   showLocalSpace,
+  showCrossings,
   onMapClick,
   relocation,
   relocationPoint,
@@ -106,6 +115,11 @@ export default function AstroMap({
     return items;
   }, [chart, visiblePlanets, visibleLineTypes, showLocalSpace]);
 
+  const crossings = useMemo(() => {
+    if (!showCrossings) return [];
+    return findCrossings(chart, visibleLineTypes, visiblePlanets);
+  }, [chart, visibleLineTypes, visiblePlanets, showCrossings]);
+
   return (
     <MapContainer
       center={[chart.input.lat, chart.input.lon]}
@@ -129,6 +143,28 @@ export default function AstroMap({
           positions={p.positions}
           pathOptions={{ color: p.color, weight: p.weight, dashArray: p.dashArray, opacity: 0.85 }}
         />
+      ))}
+      {crossings.map((c, i) => (
+        <CircleMarker
+          key={i}
+          center={[c.lat, c.lon]}
+          radius={5}
+          pathOptions={{ color: '#fff', weight: 1, fillColor: '#f2f2f2', fillOpacity: 0.9 }}
+        >
+          <Popup>
+            <div className="crossing-popup">
+              <strong>Planetary crossing</strong>
+              {[c.a, c.b].map((side, idx) => (
+                <div key={idx} className="crossing-line">
+                  <span style={{ color: PLANET_META[side.planet]?.color }}>
+                    {PLANET_META[side.planet]?.symbol} {PLANET_META[side.planet]?.label} {LINE_TYPE_LABEL[side.lineType]}
+                  </span>
+                  <div className="place-line-meaning">{lineMeaning(side.planet, side.lineType)}</div>
+                </div>
+              ))}
+            </div>
+          </Popup>
+        </CircleMarker>
       ))}
       <Marker position={[chart.input.lat, chart.input.lon]} icon={birthIcon}>
         <Popup>Birthplace</Popup>

@@ -22,6 +22,7 @@ export default function App() {
   const [visiblePlanets, setVisiblePlanets] = useState(new Set(Object.keys(PLANET_META)));
   const [visibleLineTypes, setVisibleLineTypes] = useState(new Set(['mc', 'ic', 'ac', 'dc']));
   const [showLocalSpace, setShowLocalSpace] = useState(false);
+  const [showCrossings, setShowCrossings] = useState(false);
 
   const [relocation, setRelocation] = useState<RelocateResponse | null>(null);
   const [relocationPoint, setRelocationPoint] = useState<[number, number] | null>(null);
@@ -99,6 +100,8 @@ export default function App() {
               onToggleLineType={toggleLineType}
               showLocalSpace={showLocalSpace}
               onToggleLocalSpace={() => setShowLocalSpace((s) => !s)}
+              showCrossings={showCrossings}
+              onToggleCrossings={() => setShowCrossings((s) => !s)}
             />
             <NatalSummary chart={chart} />
             <BestCities chart={chart} enabledLineTypes={visibleLineTypes} />
@@ -120,6 +123,7 @@ export default function App() {
             visiblePlanets={visiblePlanets}
             visibleLineTypes={visibleLineTypes}
             showLocalSpace={showLocalSpace}
+            showCrossings={showCrossings}
             onMapClick={handleMapClick}
             relocation={relocation}
             relocationPoint={relocationPoint}

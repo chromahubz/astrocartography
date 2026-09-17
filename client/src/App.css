@@ -160,7 +160,18 @@ html, body, #root { height: 100%; margin: 0; }
 .verdict-bad { background: rgba(240, 107, 90, 0.15); color: #f06b5a; }
 .verdict-neutral { background: rgba(201, 162, 39, 0.15); color: #c9a227; }
 .place-lines { list-style: none; padding: 0; margin: 4px 0 0; }
-.place-lines li { padding: 1px 0; color: #ccc; }
+.place-lines li { padding: 3px 0; color: #ccc; }
+.place-line-meaning { color: #999; font-size: 11px; margin-top: 1px; }
+
+.strength-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; text-transform: uppercase; }
+.strength-exact { background: rgba(240, 168, 60, 0.2); color: #f0a83c; }
+.strength-close { background: rgba(124, 197, 118, 0.18); color: #7cc576; }
+.strength-moderate { background: rgba(111, 159, 232, 0.18); color: #6f9fe8; }
+.strength-background { background: rgba(153, 153, 153, 0.18); color: #999; }
+
+.crossing-popup { font-size: 12px; }
+.crossing-popup strong { display: block; margin-bottom: 6px; color: #f2f2f2; }
+.crossing-line { margin-bottom: 6px; }
 
 /* Leaflet popups default to a white card; restyle to match the app's dark theme
    so PlaceReading's colors (tuned for the dark sidebar) stay legible there too. */

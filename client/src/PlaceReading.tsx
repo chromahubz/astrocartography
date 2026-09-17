@@ -1,6 +1,7 @@
 import type { RelocateResponse } from './api';
 import type { PointScore } from './cityScore';
 import { PLANET_META, degToSign } from './planets';
+import { lineMeaning, strengthBand } from './lineMeanings';
 
 const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
 
@@ -44,14 +45,21 @@ export default function PlaceReading({
       )}
       {top3.length > 0 && (
         <ul className="place-lines">
-          {top3.map((c, i) => (
-            <li key={i}>
-              <span style={{ color: PLANET_META[c.planet]?.color }}>
-                {PLANET_META[c.planet]?.symbol} {PLANET_META[c.planet]?.label} {LINE_TYPE_LABEL[c.lineType]}
-              </span>{' '}
-              {Math.round(c.distanceKm)} km
-            </li>
-          ))}
+          {top3.map((c, i) => {
+            const band = strengthBand(c.distanceKm);
+            return (
+              <li key={i}>
+                <div>
+                  <span style={{ color: PLANET_META[c.planet]?.color }}>
+                    {PLANET_META[c.planet]?.symbol} {PLANET_META[c.planet]?.label} {LINE_TYPE_LABEL[c.lineType]}
+                  </span>{' '}
+                  <span className={`strength-badge ${band.className}`}>{band.label}</span>{' '}
+                  ({Math.round(c.distanceKm)} km)
+                </div>
+                <div className="place-line-meaning">{lineMeaning(c.planet, c.lineType)}</div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
