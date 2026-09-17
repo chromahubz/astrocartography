@@ -113,13 +113,13 @@ export default function AstroMap({
       worldCopyJump
       style={{ width: '100%', height: '100%' }}
     >
-      {/* Wikimedia's "osm-intl" tiles render place labels with the international
-          (largely English/Latin) name alongside the local one, rather than only
-          the local script baked into standard OSM raster tiles. Free, no API key. */}
+      {/* Esri's World Street Map: labels in English/Latin script worldwide, free to
+          embed with no API key (unlike Wikimedia's osm-intl tiles, which are
+          restricted to Wikimedia's own sites and blocked third-party production use). */}
       <TileLayer
-        url="https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, style by Wikimedia'
-        maxZoom={18}
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+        attribution="Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom"
+        maxZoom={19}
       />
       <ClickHandler onMapClick={onMapClick} />
       <FlyToOnFocus point={relocationPoint} focusKey={focusKey} />
