@@ -42,6 +42,7 @@ export default function App() {
   const [showCrossings, setShowCrossings] = useState(false);
   const [showParans, setShowParans] = useState(false);
   const [showBestWorstPins, setShowBestWorstPins] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [unit, setUnit] = useState<DistanceUnit>('km');
   const [mapMode, setMapMode] = useState<'mercator' | 'polar'>('mercator');
 
@@ -194,6 +195,8 @@ export default function App() {
               onToggleParans={() => setShowParans((s) => !s)}
               showBestWorstPins={showBestWorstPins}
               onToggleBestWorstPins={() => setShowBestWorstPins((s) => !s)}
+              showHeatmap={showHeatmap}
+              onToggleHeatmap={() => setShowHeatmap((s) => !s)}
             />
             <NatalSummary chart={chart} />
             <TopPicks
@@ -232,6 +235,7 @@ export default function App() {
               showCrossings={showCrossings}
               showParans={showParans}
               showBestWorstPins={showBestWorstPins}
+              showHeatmap={showHeatmap}
               onMapClick={handleMapClick}
               relocation={relocation}
               relocationPoint={relocationPoint}

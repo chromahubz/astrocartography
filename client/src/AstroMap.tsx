@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, CircleMarker, ImageOverlay, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { ChartResponse, RelocateResponse } from './api';
 import { PLANET_META, LINE_STYLES, LINE_TYPE_LABEL } from './planets';
@@ -10,6 +10,7 @@ import { findParans } from './parans';
 import { lineMeaning } from './lineMeanings';
 import { narrativeSummary } from './narrative';
 import ExpandableText from './ExpandableText';
+import { buildHeatmapDataUrl, HEATMAP_BOUNDS } from './heatmap';
 import { formatDistance, type DistanceUnit } from './units';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
   showCrossings: boolean;
   showParans: boolean;
   showBestWorstPins: boolean;
+  showHeatmap: boolean;
   onMapClick: (lat: number, lon: number) => void;
   relocation: RelocateResponse | null;
   relocationPoint: [number, number] | null;
@@ -107,6 +109,7 @@ export default function AstroMap({
   showCrossings,
   showParans,
   showBestWorstPins,
+  showHeatmap,
   onMapClick,
   relocation,
   relocationPoint,
@@ -116,6 +119,20 @@ export default function AstroMap({
   focusKey,
 }: Props) {
   const targetMarkerRef = useRef<L.Marker>(null);
+  const [heatmapUrl, setHeatmapUrl] = useState('');
+
+  useEffect(() => {
+    if (!showHeatmap) {
+      setHeatmapUrl('');
+      return;
+    }
+    // Defer so the "computing" state (an empty overlay while this runs) actually
+    // paints before the heavy synchronous grid scoring blocks the main thread.
+    const id = setTimeout(() => {
+      setHeatmapUrl(buildHeatmapDataUrl(chart, visibleLineTypes, showLocalSpace));
+    }, 0);
+    return () => clearTimeout(id);
+  }, [chart, visibleLineTypes, showLocalSpace, showHeatmap]);
 
   useEffect(() => {
     if (relocationPoint) targetMarkerRef.current?.openPopup();
@@ -191,6 +208,7 @@ export default function AstroMap({
       />
       <ClickHandler onMapClick={onMapClick} />
       <FlyToOnFocus point={relocationPoint} focusKey={focusKey} />
+      {heatmapUrl && <ImageOverlay url={heatmapUrl} bounds={HEATMAP_BOUNDS} />}
       {polylines.map((p) => (
         <Polyline
           key={p.key}

@@ -13,6 +13,8 @@ interface Props {
   onToggleParans: () => void;
   showBestWorstPins: boolean;
   onToggleBestWorstPins: () => void;
+  showHeatmap: boolean;
+  onToggleHeatmap: () => void;
 }
 
 const LINE_TYPE_LABELS: Record<string, string> = {
@@ -35,6 +37,8 @@ export default function Legend({
   onToggleParans,
   showBestWorstPins,
   onToggleBestWorstPins,
+  showHeatmap,
+  onToggleHeatmap,
 }: Props) {
   return (
     <div className="legend">
@@ -64,6 +68,10 @@ export default function Legend({
       <label className="legend-row">
         <input type="checkbox" checked={showBestWorstPins} onChange={onToggleBestWorstPins} />
         Best/worst places pins (top 5 each)
+      </label>
+      <label className="legend-row">
+        <input type="checkbox" checked={showHeatmap} onChange={onToggleHeatmap} />
+        Heatmap (good/bad shading worldwide)
       </label>
 
       <h3>Planets</h3>
