@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { geoAzimuthalEquidistant, geoPath, geoGraticule10, type GeoProjection } from 'd3-geo';
-import * as topojson from 'topojson-client';
-import landTopo from 'world-atlas/land-110m.json';
+import { landFeature } from './landData';
 import type { ChartResponse } from './api';
 import { PLANET_META, LINE_STYLES } from './planets';
 
@@ -66,10 +65,7 @@ export default function PolarView({ chart, visiblePlanets, visibleLineTypes, onM
       .scale(SCALE);
   }, []);
 
-  const land = useMemo(() => {
-    const geo = topojson.feature(landTopo as never, (landTopo as never as { objects: { land: never } }).objects.land);
-    return geoPath(projection)(geo as never) ?? '';
-  }, [projection]);
+  const land = useMemo(() => geoPath(projection)(landFeature) ?? '', [projection]);
 
   const graticule = useMemo(() => geoPath(projection)(geoGraticule10()) ?? '', [projection]);
 
