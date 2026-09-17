@@ -85,7 +85,7 @@ export default function App() {
               onToggleLocalSpace={() => setShowLocalSpace((s) => !s)}
             />
             <NatalSummary chart={chart} />
-            <BestCities chart={chart} />
+            <BestCities chart={chart} enabledLineTypes={visibleLineTypes} />
             <p className="hint">Click anywhere on the map to see the relocated ASC/MC for that spot.</p>
           </>
         )}

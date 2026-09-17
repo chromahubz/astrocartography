@@ -1,37 +1,75 @@
 import { useMemo, useState } from 'react';
 import type { ChartResponse } from './api';
-import { scoreCities } from './cityScore';
+import { scoreCities, type CityScore } from './cityScore';
 import { PLANET_META } from './planets';
 
-export default function BestCities({ chart }: { chart: ChartResponse }) {
+const LINE_TYPE_LABEL: Record<string, string> = { mc: 'MC', ic: 'IC', ac: 'AC', dc: 'DC' };
+
+function CityRow({ entry }: { entry: CityScore }) {
+  const top = entry.topContribution;
+  return (
+    <li>
+      <div className="city-name">
+        {entry.city.name}, {entry.city.country}
+      </div>
+      {top && (
+        <div className="city-detail">
+          closest:{' '}
+          <span style={{ color: PLANET_META[top.planet]?.color }}>
+            {PLANET_META[top.planet]?.symbol} {PLANET_META[top.planet]?.label} {LINE_TYPE_LABEL[top.lineType]}
+          </span>{' '}
+          line ({Math.round(top.distanceKm)} km)
+        </div>
+      )}
+    </li>
+  );
+}
+
+export default function BestCities({
+  chart,
+  enabledLineTypes,
+}: {
+  chart: ChartResponse;
+  enabledLineTypes: Set<string>;
+}) {
   const [open, setOpen] = useState(false);
-  const ranked = useMemo(() => scoreCities(chart), [chart]);
+  const [tab, setTab] = useState<'best' | 'worst'>('best');
+  const ranked = useMemo(() => scoreCities(chart, enabledLineTypes), [chart, enabledLineTypes]);
   const top = ranked.slice(0, 10);
+  const bottom = ranked.slice(-10).reverse();
+  const shown = tab === 'best' ? top : bottom;
 
   return (
     <div className="best-cities">
       <button type="button" className="section-toggle" onClick={() => setOpen((o) => !o)}>
-        {open ? '▾' : '▸'} Best places to live (beta)
+        {open ? '▾' : '▸'} Best & worst places to live (beta)
       </button>
       {open && (
         <>
           <p className="hint">
-            Ranked by proximity to your supportive lines (Venus, Jupiter, Sun) and distance from
-            challenging ones (Mars, Saturn, Pluto). A heuristic starting point, not a verdict.
+            Scored per line (AC/MC weighted strongest) using your chart's own planet placements
+            &mdash; essential dignity, chart ruler, and retrograde status all shift the weighting.
+            A heuristic starting point, not a verdict. Uses whichever line types are checked above.
           </p>
-          <ol className="city-list">
-            {top.map((c) => (
-              <li key={c.city.name}>
-                <div className="city-name">
-                  {c.city.name}, {c.city.country}
-                </div>
-                <div className="city-detail">
-                  closest: <span style={{ color: PLANET_META[c.nearestPlanet]?.color }}>
-                    {PLANET_META[c.nearestPlanet]?.symbol} {PLANET_META[c.nearestPlanet]?.label}
-                  </span>{' '}
-                  line ({Math.round(c.nearestKm)} km)
-                </div>
-              </li>
+          <div className="tab-row">
+            <button
+              type="button"
+              className={tab === 'best' ? 'tab active' : 'tab'}
+              onClick={() => setTab('best')}
+            >
+              Best
+            </button>
+            <button
+              type="button"
+              className={tab === 'worst' ? 'tab active' : 'tab'}
+              onClick={() => setTab('worst')}
+            >
+              Worst
+            </button>
+          </div>
+          <ol className="city-list" key={tab}>
+            {shown.map((entry) => (
+              <CityRow key={entry.city.name} entry={entry} />
             ))}
           </ol>
         </>

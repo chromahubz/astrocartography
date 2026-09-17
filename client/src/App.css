@@ -107,6 +107,19 @@ html, body, #root { height: 100%; margin: 0; }
   padding: 0;
   cursor: pointer;
 }
+.tab-row { display: flex; gap: 6px; margin-top: 8px; }
+.tab {
+  flex: 1;
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2129;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tab.active { background: #4a6fd6; border-color: #4a6fd6; color: white; }
+
 .city-list { list-style: decimal; padding-left: 20px; margin: 8px 0 0; font-size: 12px; }
 .city-list li { margin-bottom: 6px; }
 .city-name { font-weight: 600; color: #f2f2f2; }

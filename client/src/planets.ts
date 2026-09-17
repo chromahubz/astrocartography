@@ -13,8 +13,9 @@ export const PLANET_META: Record<string, { symbol: string; color: string; label:
   pluto: { symbol: '♇', color: '#c56fe0', label: 'Pluto' },
 };
 
-// Classical benefic/malefic classification used only for the "best places" scoring
-// heuristic below — a simplification, not an astronomical fact.
+// Classical benefic/malefic classification used as a *starting point* for the
+// "best places" scoring heuristic — see cityScore.ts, which further modulates
+// this per the individual chart (dignity, chart ruler, retrograde).
 export const PLANET_WEIGHT: Record<string, number> = {
   sun: 0.6,
   moon: 0.4,
@@ -35,10 +36,59 @@ export const LINE_STYLES: Record<string, { dashArray?: string; weight: number }>
   dc: { weight: 2.5, dashArray: '2 8 2 2' },
 };
 
+// Angular lines (AC/MC) are traditionally felt as the strongest, most personally
+// direct expressions of a planet; DC/IC are real but somewhat less dominant.
+// Used only by the "best places" heuristic.
+export const LINE_TYPE_WEIGHT: Record<string, number> = {
+  ac: 1,
+  mc: 0.9,
+  dc: 0.75,
+  ic: 0.75,
+};
+
 export const ZODIAC_SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
 ];
+
+// Modern single rulership per sign (index 0 = Aries ... 11 = Pisces). Used both to
+// find a chart's Ascendant ruler and, with EXALTATION below, to score essential
+// dignity — a planet is stronger in a sign it rules or is exalted in, weaker in
+// the opposite (detriment / fall).
+export const SIGN_RULERS: string[] = [
+  'mars', 'venus', 'mercury', 'moon', 'sun', 'mercury',
+  'venus', 'pluto', 'jupiter', 'saturn', 'uranus', 'neptune',
+];
+
+// Classical exaltations (only defined for the 7 traditional planets).
+export const EXALTATION_SIGN: Record<string, number> = {
+  sun: 0, // Aries
+  moon: 1, // Taurus
+  mercury: 5, // Virgo
+  venus: 11, // Pisces
+  mars: 9, // Capricorn
+  jupiter: 3, // Cancer
+  saturn: 6, // Libra
+};
+
+export function signIndexOf(deg: number): number {
+  return Math.floor((((deg % 360) + 360) % 360) / 30);
+}
+
+/**
+ * Essential dignity modifier: +1 in the sign a planet rules, +0.5 in its
+ * exaltation sign, -1 in detriment (opposite its rulership), -0.5 in fall
+ * (opposite its exaltation), 0 otherwise ("peregrine").
+ */
+export function dignityModifier(planet: string, signIndex: number): number {
+  if (SIGN_RULERS[signIndex] === planet) return 1;
+  if (EXALTATION_SIGN[planet] === signIndex) return 0.5;
+  // Mercury and Venus rule two signs each, so check every sign they rule, not just the first.
+  const rulesSign = SIGN_RULERS.some((ruler, j) => ruler === planet && (j + 6) % 12 === signIndex);
+  if (rulesSign) return -1;
+  if (planet in EXALTATION_SIGN && (EXALTATION_SIGN[planet] + 6) % 12 === signIndex) return -0.5;
+  return 0;
+}
 
 export function degToSign(deg: number): string {
   const norm = ((deg % 360) + 360) % 360;
