@@ -122,8 +122,22 @@ html, body, #root { height: 100%; margin: 0; }
 
 .city-list { list-style: decimal; padding-left: 20px; margin: 8px 0 0; font-size: 12px; }
 .city-list li { margin-bottom: 6px; }
+.city-list.scrollable { max-height: 320px; overflow-y: auto; padding-right: 4px; }
 .city-name { font-weight: 600; color: #f2f2f2; }
 .city-detail { color: #bbb; }
+
+.show-more {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1f2129;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+}
+.show-more:hover { background: #2a2c36; }
 
 .city-check { padding: 12px 0; border-bottom: 1px solid #333; }
 .city-check h3 { font-size: 13px; text-transform: uppercase; color: #999; margin: 0 0 8px; }

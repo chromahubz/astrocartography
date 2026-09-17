@@ -25,6 +25,8 @@ function CityRow({ entry }: { entry: CityScore }) {
   );
 }
 
+const PAGE_SIZE = 10;
+
 export default function BestCities({
   chart,
   enabledLineTypes,
@@ -34,10 +36,17 @@ export default function BestCities({
 }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'best' | 'worst'>('best');
+  const [shownCount, setShownCount] = useState(PAGE_SIZE);
   const ranked = useMemo(() => scoreCities(chart, enabledLineTypes), [chart, enabledLineTypes]);
-  const top = ranked.slice(0, 10);
-  const bottom = ranked.slice(-10).reverse();
-  const shown = tab === 'best' ? top : bottom;
+  const total = ranked.length;
+  const worstFirst = useMemo(() => [...ranked].reverse(), [ranked]);
+  const list = tab === 'best' ? ranked : worstFirst;
+  const shown = list.slice(0, shownCount);
+
+  function switchTab(t: 'best' | 'worst') {
+    setTab(t);
+    setShownCount(PAGE_SIZE);
+  }
 
   return (
     <div className="best-cities">
@@ -50,28 +59,26 @@ export default function BestCities({
             Scored per line (AC/MC weighted strongest) using your chart's own planet placements
             &mdash; essential dignity, chart ruler, and retrograde status all shift the weighting.
             A heuristic starting point, not a verdict. Uses whichever line types are checked above.
+            Ranked across {total} cities worldwide.
           </p>
           <div className="tab-row">
-            <button
-              type="button"
-              className={tab === 'best' ? 'tab active' : 'tab'}
-              onClick={() => setTab('best')}
-            >
+            <button type="button" className={tab === 'best' ? 'tab active' : 'tab'} onClick={() => switchTab('best')}>
               Best
             </button>
-            <button
-              type="button"
-              className={tab === 'worst' ? 'tab active' : 'tab'}
-              onClick={() => setTab('worst')}
-            >
+            <button type="button" className={tab === 'worst' ? 'tab active' : 'tab'} onClick={() => switchTab('worst')}>
               Worst
             </button>
           </div>
-          <ol className="city-list" key={tab}>
+          <ol className="city-list scrollable" key={tab}>
             {shown.map((entry) => (
               <CityRow key={entry.city.name} entry={entry} />
             ))}
           </ol>
+          {shownCount < list.length && (
+            <button type="button" className="show-more" onClick={() => setShownCount((c) => c + 20)}>
+              Show 20 more ({list.length - shownCount} left)
+            </button>
+          )}
         </>
       )}
     </div>
